@@ -182,8 +182,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ setStudents }) => {
             {loading && <CircularProgress size={20} sx={{ mr: 1 }} />}
             Last inn elever
           </Button>
-        </Box></>
+
+        </Box> 
+        {loading || parsed ? (         
+        <Typography variant="body2" sx={{ mt: 2, mb: 2, fontWeight:"bold", color: "HighlightText" }}>
+          Steg 3: 
+        </Typography>
+        ) : null}
+        </>
+        
       )}
+
     </Box>
   );
 };
