@@ -3,12 +3,24 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L, { LatLngBounds } from "leaflet";
 import type { Student } from "./FileUpload";
 
-const defaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+var defaultIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
 });
+
+const referenceIcon = L.icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 
 export const geocodeAddress = async (address: string) => {
   try {
@@ -36,16 +48,19 @@ const FitBounds: React.FC<{ locations: Student[]; reference?: Student | null }> 
     const valid = locations.filter((s) => s.lat !== undefined && s.lng !== undefined);
     if (valid.length === 0) return;
 
-    const bounds = new LatLngBounds(valid.map((s) => [s.lat!, s.lng!]));
-    map.fitBounds(bounds, { padding: [50, 50] });
-
-    if (reference?.lat !== undefined && reference?.lng !== undefined) {
-      map.setView([reference.lat, reference.lng], map.getZoom());
+    if (!reference || !valid?.length || (reference.lat === undefined && reference.lng === undefined)) {
+      // Første gang eller når nye elever lastes inn: vis alle
+      const bounds = new LatLngBounds(valid.map((s) => [s.lat!, s.lng!]));
+      map.fitBounds(bounds, { padding: [50, 50] });
+    } else if (reference?.lat !== undefined && reference?.lng !== undefined) {
+      // Når referanse endres: zoom inn
+      map.setView([reference.lat, reference.lng], 16, { animate: true });
     }
   }, [locations, reference, map]);
 
   return null;
 };
+
 
 type MapViewProps = {
   students: Student[];
@@ -53,6 +68,7 @@ type MapViewProps = {
 };
 
 const MapView: React.FC<MapViewProps> = ({ students, reference }) => {
+
   return (
     <MapContainer
       center={[reference?.lat ?? 59.203, reference?.lng ?? 9.608]}
@@ -68,12 +84,17 @@ const MapView: React.FC<MapViewProps> = ({ students, reference }) => {
       {students
         .filter((s) => s.lat !== undefined && s.lng !== undefined)
         .map((s, idx) => (
-          <Marker key={idx} position={[s.lat!, s.lng!]} icon={defaultIcon}>
+          <Marker
+            key={idx}
+            position={[s.lat!, s.lng!]}
+            icon={s.name === reference?.name ? referenceIcon : defaultIcon}
+          >
             <Popup>{s.name}</Popup>
           </Marker>
         ))}
 
-      <FitBounds locations={students} reference={reference} />
+
+<FitBounds locations={students} reference={reference} />
     </MapContainer>
   );
 };
